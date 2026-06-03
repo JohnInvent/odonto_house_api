@@ -1,5 +1,6 @@
 package com.odonto.house.odonto_house_api.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -47,6 +48,7 @@ public class User {
     @JoinTable(name = "user_roles",
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id"))
+    @JsonIgnoreProperties("users")
     @Builder.Default
     private Set<Role> roles = new HashSet<>();
 }

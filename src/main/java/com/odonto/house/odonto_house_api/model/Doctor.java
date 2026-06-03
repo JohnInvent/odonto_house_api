@@ -1,5 +1,6 @@
 package com.odonto.house.odonto_house_api.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -17,6 +18,7 @@ public class Doctor {
 
     @OneToOne
     @JoinColumn(name = "user_id", nullable = false, unique = true)
+    @JsonIgnoreProperties("roles")
     private User user;
 
     @Column(length = 100)

@@ -1,5 +1,6 @@
 package com.odonto.house.odonto_house_api.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -22,6 +23,7 @@ public class Role {
     private String nombre;
 
     @ManyToMany(mappedBy = "roles")
+    @JsonIgnoreProperties("roles")
     @Builder.Default
     private Set<User> users = new HashSet<>();
 }
