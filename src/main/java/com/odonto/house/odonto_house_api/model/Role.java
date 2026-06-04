@@ -22,8 +22,16 @@ public class Role {
     @Column(nullable = false, unique = true, length = 50)
     private String nombre;
 
-    @ManyToMany(mappedBy = "roles")
-    @JsonIgnoreProperties("roles")
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "role_permissions",
+            joinColumns = @JoinColumn(name = "role_id"),
+            inverseJoinColumns = @JoinColumn(name = "permission_id"))
+    /* Relationships managed by this entity only */
     @Builder.Default
-    private Set<User> users = new HashSet<>();
+    private Set<Permission> permissions = new HashSet<>();
+
+    /*
+     * Removed bidirectional relationship to prevent ConcurrentModificationException.
+     * Access users through User entity instead.
+     */
 }

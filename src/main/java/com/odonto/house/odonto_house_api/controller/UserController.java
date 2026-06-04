@@ -1,82 +1,77 @@
 package com.odonto.house.odonto_house_api.controller;
 
-import com.odonto.house.odonto_house_api.model.Role;
-import com.odonto.house.odonto_house_api.model.User;
-import com.odonto.house.odonto_house_api.repository.RoleRepository;
-import com.odonto.house.odonto_house_api.repository.UserRepository;
+import com.odonto.house.odonto_house_api.dto.ForgotPasswordRequest;
+import com.odonto.house.odonto_house_api.dto.ResetPasswordRequest;
+import com.odonto.house.odonto_house_api.dto.UserRequest;
+import com.odonto.house.odonto_house_api.dto.UserResponse;
+import com.odonto.house.odonto_house_api.service.UserService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.Map;
 
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/api/v1/users")
+@RequiredArgsConstructor
 public class UserController {
 
-    private final UserRepository userRepository;
-    private final RoleRepository roleRepository;
-
-    public UserController(UserRepository userRepository, RoleRepository roleRepository) {
-        this.userRepository = userRepository;
-        this.roleRepository = roleRepository;
-    }
+    private final UserService userService;
 
     @GetMapping
-    public List<User> getAll() {
-        return userRepository.findAll();
+    public ResponseEntity<List<UserResponse>> getAllUsers() {
+        List<UserResponse> users = userService.getAllUsers();
+        return ResponseEntity.ok(users);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<User> getById(@PathVariable Long id) {
-        return userRepository.findById(id)
+    public ResponseEntity<UserResponse> getUserById(@PathVariable Long id) {
+        return userService.getUserById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public ResponseEntity<User> create(@RequestBody User user) {
-        if (user.getRoles() != null) {
-            user.setRoles(resolveRoles(user.getRoles()));
-        }
-        User saved = userRepository.save(user);
-        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+    public ResponseEntity<UserResponse> createUser(@Valid @RequestBody UserRequest request) {
+        UserResponse created = userService.createUser(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<User> update(@PathVariable Long id, @RequestBody User user) {
-        return userRepository.findById(id)
-                .map(existing -> {
-                    existing.setNombre(user.getNombre());
-                    existing.setApellido(user.getApellido());
-                    existing.setEmail(user.getEmail());
-                    existing.setPassword(user.getPassword());
-                    existing.setTelefono(user.getTelefono());
-                    existing.setActivo(user.getActivo());
-                    if (user.getRoles() != null) {
-                        existing.setRoles(resolveRoles(user.getRoles()));
-                    }
-                    return ResponseEntity.ok(userRepository.save(existing));
-                })
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<UserResponse> updateUser(@PathVariable Long id, @Valid @RequestBody UserRequest request) {
+        UserResponse updated = userService.updateUser(id, request);
+        return ResponseEntity.ok(updated);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        return userRepository.findById(id)
-                .map(user -> {
-                    userRepository.delete(user);
-                    return ResponseEntity.noContent().<Void>build();
-                })
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+        userService.deleteUser(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{id}/activate")
+    public ResponseEntity<UserResponse> activateUser(@PathVariable Long id) {
+        userService.activateUser(id);
+        return userService.getUserById(id)
+                .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    private Set<Role> resolveRoles(Set<Role> roles) {
-        return roles.stream()
-                .map(role -> roleRepository.findById(role.getId())
-                        .orElseThrow(() -> new IllegalArgumentException("Role not found: " + role.getId())))
-                .collect(Collectors.toSet());
+    @PostMapping("/forgot-password")
+    public ResponseEntity<Map<String, String>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        userService.generateResetToken(request.getEmail());
+        // Siempre devolver el mismo mensaje por seguridad
+        return ResponseEntity.ok(Map.of(
+                "message", "Si el correo existe, se ha enviado un enlace de recuperación"
+        ));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<Map<String, String>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        userService.resetPassword(request.getToken(), request.getNewPassword());
+        return ResponseEntity.ok(Map.of("message", "Contraseña actualizada correctamente"));
     }
 }

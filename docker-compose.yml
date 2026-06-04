@@ -11,7 +11,5 @@ services:
     ports:
       - "8085:8085"
 
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://host.docker.internal:5432/odonto_house
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: admin
+    env_file:
+      - .env

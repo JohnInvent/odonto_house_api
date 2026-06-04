@@ -36,6 +36,7 @@ public class User {
     private String telefono;
 
     @Column(nullable = false)
+    @Builder.Default
     private Boolean activo = true;
 
     @Column(name = "created_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
@@ -44,11 +45,17 @@ public class User {
     @Column(name = "updated_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime updatedAt;
 
+    @Column(name = "reset_token", length = 255)
+    private String resetToken;
+
+    @Column(name = "reset_token_expiry")
+    private LocalDateTime resetTokenExpiry;
+
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "user_roles",
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id"))
-    @JsonIgnoreProperties("users")
+    /* Roles for this user - managed by User entity only */
     @Builder.Default
     private Set<Role> roles = new HashSet<>();
 }
